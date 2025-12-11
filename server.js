@@ -20,19 +20,19 @@ app.post("/webhook/orders-create", async (req, res) => {
   const order = req.body;
   console.log(`Processing order: ${order.id}`);
 
-  // Check if shipping method is FedEx Ground Economy
-  const shippingLine = order.shipping_lines.find(
-    (line) => line.title.includes("Fedex") || line.source.includes("fedex")
-  );
+  // Detect FedEx Ground either in the shipping_lines or anywhere in the request body
+  const bodyText = JSON.stringify(order || {}).toLowerCase();
+  const hasFedexAndGround =
+    bodyText.includes("fedex") && bodyText.includes("ground");
 
-  if (!shippingLine) {
+  if (!hasFedexAndGround) {
     console.log(
-      `Order ${order.id}: No FedEx Ground Economy shipping line found. Skipping.`
+      `Order ${order.id}: No FedEx Ground Economy shipping found. Skipping.`
     );
     return res.sendStatus(200); // nothing to do
   }
 
-  console.log(`Order ${order.id}: FedEx Ground Economy shipping line found.`);
+  console.log(`Order ${order.id}: FedEx Ground Economy shipping detected.`);
 
   // Calculate total weight in grams
   let totalWeightGrams = order.line_items.reduce((sum, item) => {
